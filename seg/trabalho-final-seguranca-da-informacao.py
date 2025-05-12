@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import tkinter as tk
 import geracao
 from tkinter import filedialog
+from geracao import *
 
 operacao = int(input('Selecione a operação desejada: \n 0 - Cifrar \n 1 - Decifrar \n'))
 print('Operação escolhida: ' + str(operacao))
@@ -20,12 +21,34 @@ if operacao == 0:
 else:
     print('Decifrar')
 
-chave = str(input('\n🔑 Informe a chave: \n'))
+# Processar a chave
+chave = str(input('\n🔑 Informe a chave (exemplo: A,B,C,D,...): \n'))
+matriz_chave = chave_para_hex(chave)
 
-chave = geracao.gerar_chave(chave)
+#### Gerar a chave
+
+ultima_coluna   = [linha[-1] for linha in matriz_chave]  # Extrai a última coluna
+primeira_coluna = [linha[0] for linha in matriz_chave]  # Extrai o primeiro elemento de cada linha
+
+primeira_palavra = geracao_primeira_palvra(primeira_coluna,ultima_coluna)
+
+print(f"Primeira palavra: {primeira_palavra}")
+
+# Adiciona a primeira palavra como uma nova coluna
+for i in range(len(matriz_chave)):
+    matriz_chave[i].append(primeira_palavra[i])
+
+# Exibe a matriz atualizada
+print("\nMatriz atualizada:")
+for linha in matriz_chave:
+    print(' '.join(linha))
 
 
 
+
+
+
+############ Geração do arquivo de saída ############
 def selecionar_arquivo():
     """Abre uma janela para o usuário selecionar um arquivo para leitura."""
     root = tk.Tk()
