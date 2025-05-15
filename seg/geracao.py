@@ -31,38 +31,64 @@ round_constant = {
     10: [0x36, 0x00, 0x00, 0x00]
 }
 
-def gerar_chave(chave):
+# Função para converter para hexadecimal
+def chave_para_hex(chave):
+    """Converte uma string de caracteres em uma matriz de valores hexadecimais."""
+    # Remove vírgulas e converte a string em uma lista de caracteres
+    caracteres = chave.replace(',', '')
+    
+    # Verifica se o número de caracteres é múltiplo de 4 para formar uma matriz 4x4
+    if len(caracteres) != 16:
+        raise ValueError("A chave deve conter exatamente 16 caracteres.")
+    
+    # Converte cada caractere para seu valor hexadecimal e organiza em uma matriz 4x4
+    matriz_hex = []
+    for i in range(0, len(caracteres), 4):
+        linha = [f"0x{ord(c):02X}" for c in caracteres[i:i+4]]
+        matriz_hex.append(linha)
+    
+    # Transpor a matriz para que as linhas se tornem colunas
+    matriz_transposta = list(map(list, zip(*matriz_hex)))
+    print("\nMatriz hexadecimal gerada:")
+    for linha in matriz_transposta:
+        print(' '.join(linha))
+    
+    return matriz_transposta
+
+
+def geracao_primeira_palvra(primeira_rk_anterior, ultima_rk_anterior):
     rodada = 1
-
-    bytes_chave = chave.split(',')
-    # if (len(bytes_chave) != 16)
-    matrix_chave = [
-        [1, 2, 3, 4],
-        [1, 2, 3, 4],
-        [1, 2, 3, 4],
-        [1, 2, 3, 4]
-    ]
-    cont = 0
-    for i in range(0, 4):
-        for j in range(0, 4):
-            matrix_chave[j][i] = bytes(bytes_chave[cont])
-            cont += 1
-    print(chave)
-    print(matrix_chave)
-
-def geracao_primeira_palvra(ultima_rk_anterior, primeira_rk_anterior, rodada):
+    
+    # Converte os valores de ultima_rk_anterior para inteiros e rotaciona
     rot_word = [ultima_rk_anterior[1], ultima_rk_anterior[2], ultima_rk_anterior[3], ultima_rk_anterior[0]]
-    palavra_subs = substituicao_palavra(rot_word)
+    print(f"Palavra gerada (rot_word): {rot_word}")
+    
+    # Substituição de bytes usando a S-Box
+    palavra_subs = substituicao_palavra([int(byte, 16) for byte in rot_word])  # Converte para inteiros antes de aplicar a S-Box
+    palavra_subs_hex = [f"0x{byte:02X}" for byte in palavra_subs]  # Converte de volta para hexadecimal
+    print(f"Palavra gerada (substituíção de palavra pelo S-Box): {palavra_subs_hex}")
+    
+    # XOR com a constante de rodada
     round_contant_atual = round_constant[rodada]
+    print(f"Constante de rodada atual: {round_contant_atual}")
     etapa_cinco = xor_tres_quatro(palavra_subs, round_contant_atual)
-    res = xor_cinco_rk_anterior(etapa_cinco, primeira_rk_anterior)
-    return res
+    etapa_cinco_hex = [f"0x{byte:02X}" for byte in etapa_cinco]  # Converte de volta para hexadecimal
+    print(f"Palavra após XOR com 3e4: {etapa_cinco_hex}")
+    
+    # XOR com a primeira palavra da rodada anterior
+    res = xor_cinco_rk_anterior(etapa_cinco, [int(x, 16) for x in primeira_rk_anterior])
+    res_hex = [f"0x{byte:02X}" for byte in res]  # Converte de volta para hexadecimal
+    print(f"XOR com a primeira palavra da rodada anterior: {res_hex}")
+    
+    rodada += 1
+    return res_hex
 
 def substituicao_palavra(palavra):
+    """Substitui cada byte da palavra usando a S-Box."""
     nova_palavra = []
     for byte in palavra:
         substituido = aplicar_sbox(byte)
-        palavra.append(substituido)
+        nova_palavra.append(substituido)
     return nova_palavra
 
 def aplicar_sbox(byte):
