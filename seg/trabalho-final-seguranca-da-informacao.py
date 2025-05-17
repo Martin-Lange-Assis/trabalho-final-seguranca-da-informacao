@@ -39,12 +39,10 @@ if caminho:
     print(f"{len(bits)} bits lidos do arquivo.")
 
 matriz_Arquivo = mostrar_bytes_em_hex(bits)
-
-print(matriz_Arquivo)
-
 matriz_Arquivo = PKCS7_Padding(matriz_Arquivo)
 
 print(matriz_Arquivo)
+
 
 
 ##### parte cifrar 
