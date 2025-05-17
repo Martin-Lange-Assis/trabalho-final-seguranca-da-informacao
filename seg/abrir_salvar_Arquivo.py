@@ -28,10 +28,10 @@ def mostrar_bytes_em_hex(bits):
         byte = int(byte_str, 2)
         hex_data.append(f"0x{byte:02X}")
 
-    # Monta matriz 4 linhas por N colunas (preenchendo linhas da esquerda para a direita)
-    linhas = [[] for _ in range(4)]
-    for idx, valor in enumerate(hex_data):
-        linhas[idx % 4].append(valor)
+    # Monta matriz 4 linhas por N colunas (preenchendo colunas da esquerda para a direita)
+    linhas = []
+    for i in range(0, len(hex_data), 4):
+        linhas.append(hex_data[i:i+4])
     return linhas
 
 def PKCS7_Padding(matriz):
@@ -46,13 +46,13 @@ def PKCS7_Padding(matriz):
         padding = 16
     else:
         padding = 16 - resto
-    # Adiciona o padding (valor em hexadecimal, ex: 0x15)
+    # Adiciona o padding (valor em hexadecimal, ex: 0x10)
     flat.extend([f"0x{padding:02X}"] * padding)
-    # Remonta a matriz 4 linhas por N colunas
-    linhas = [[] for _ in range(4)]
-    for idx, valor in enumerate(flat):
-        linhas[idx % 4].append(valor)
-    return linhas
+    # Quebra em blocos de 16
+    blocos = []
+    for i in range(0, len(flat), 16):
+        blocos.append(flat[i:i+16])
+    return blocos
 
 
 def bits_para_arquivo(lista_bits, caminho_saida):
