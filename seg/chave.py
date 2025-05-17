@@ -31,34 +31,57 @@ round_constant = {
     10: [0x36, 0x00, 0x00, 0x00]
 }
 
+def gerar_round_keys(chave):
+    round_keys = chave_para_hex(chave)
+
+    for rodada in range(1, 11):
+        geracao_primeira_palavra(round_keys, rodada)
+
+        # Adiciona as 3 palavras faltantes (além da primeira) para completar roundkey
+        geracao_demais_palavras(round_keys)
+    print(round_keys)
+    return round_keys
+
 # Função para converter para hexadecimal
 def chave_para_hex(chave):
     """Converte uma string de caracteres em uma matriz de valores hexadecimais."""
     # Remove vírgulas e converte a string em uma lista de caracteres
-    caracteres = chave.replace(',', '')
-    
+    caracteres = chave.split(",")
+
     # Verifica se o número de caracteres é múltiplo de 4 para formar uma matriz 4x4
     if len(caracteres) != 16:
         raise ValueError("A chave deve conter exatamente 16 caracteres.")
-    
+
     # Converte cada caractere para seu valor hexadecimal e organiza em uma matriz 4x4
     matriz_hex = []
     for i in range(0, len(caracteres), 4):
-        linha = [f"0x{ord(c):02X}" for c in caracteres[i:i+4]]
+        linha = []
+        for c in caracteres[i:i+4]:
+            try:
+                # Tenta converter como número
+                valor = int(c)
+                linha.append(hex(valor))
+            except ValueError:
+                # Se falhar, trata como caractere
+                if len(c) == 1:  # Se for um único caractere
+                    linha.append(hex(ord(c)))
+                else:
+                    # Para strings que não são números nem caracteres individuais
+                    raise ValueError(f"Valor inválido na chave: '{c}'")
         matriz_hex.append(linha)
-    
+
     # Transpor a matriz para que as linhas se tornem colunas
     matriz_transposta = list(map(list, zip(*matriz_hex)))
     print("\nMatriz hexadecimal gerada:")
     for linha in matriz_transposta:
         print(' '.join(linha))
-    
-    return matriz_transposta
 
+    return matriz_hex
 
-def geracao_primeira_palvra(primeira_rk_anterior, ultima_rk_anterior):
-    rodada = 1
-    
+def geracao_primeira_palavra(round_keys, rodada):
+    primeira_rk_anterior = round_keys[-4]
+    ultima_rk_anterior = round_keys[-1]
+
     # Converte os valores de ultima_rk_anterior para inteiros e rotaciona
     rot_word = [ultima_rk_anterior[1], ultima_rk_anterior[2], ultima_rk_anterior[3], ultima_rk_anterior[0]]
     print(f"Palavra gerada (rot_word): {rot_word}")
@@ -79,9 +102,8 @@ def geracao_primeira_palvra(primeira_rk_anterior, ultima_rk_anterior):
     res = xor_cinco_rk_anterior(etapa_cinco, [int(x, 16) for x in primeira_rk_anterior])
     res_hex = [f"0x{byte:02X}" for byte in res]  # Converte de volta para hexadecimal
     print(f"XOR com a primeira palavra da rodada anterior: {res_hex}")
-    
-    rodada += 1
-    return res_hex
+
+    round_keys.append(res_hex)
 
 def substituicao_palavra(palavra):
     """Substitui cada byte da palavra usando a S-Box."""
@@ -108,13 +130,18 @@ def xor_cinco_rk_anterior(etapa_cinco, primeira_rk_anterior):
         nova_palavra.append(etapa_cinco[i] ^ primeira_rk_anterior[i])
     return nova_palavra
 
-def expandir_chave_demais_palavras(palavras_iniciais):
-    primeiro = 0
-    ultimo = 3
-    for _ in range(0, 10):
-        palavra_nova = []
-        for j in range(0, 4):
-            palavra_nova.append(palavras_iniciais[primeiro][j] ^ palavras_iniciais[ultimo][j])
+def geracao_demais_palavras(round_keys):
+    words_size = len(round_keys)
+
+    primeiro = words_size - 4
+    ultimo = words_size - 1
+
+    for _ in range(0, 3): # Já temos a 1 palavra da Roundkey, geramos as outras 3
+        new_word = []
+        for j in range(0, 4): # Cada palavra tem 4 bytes
+            int_xor_result = int(round_keys[primeiro][j], 16) ^ int(round_keys[ultimo][j], 16)
+            hex_result = f"0x{int_xor_result:02X}"
+            new_word.append(hex_result)
+        round_keys.append(new_word) # Não quebrar loop
         primeiro += 1
         ultimo += 1
-        palavras_iniciais.append(palavra_nova)
