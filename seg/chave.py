@@ -145,3 +145,12 @@ def geracao_demais_palavras(round_keys):
         round_keys.append(new_word) # Não quebrar loop
         primeiro += 1
         ultimo += 1
+
+def agrupar_blocos_chave(matriz_chave):
+    """Agrupa os bytes da chave em blocos de 4 palavras (cada bloco é uma lista 4x4)."""
+    blocos = []
+    for i in range(0, len(matriz_chave), 4):
+        bloco = matriz_chave[i:i+4]
+        if len(bloco) == 4:
+            blocos.append(bloco)
+    return blocos

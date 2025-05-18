@@ -1,3 +1,5 @@
+from chave import substituicao_palavra
+
 # Tabela E
 E = [
     [0x01, 0x03, 0x05, 0x0F, 0x11, 0x33, 0x55, 0xFF, 0x1A, 0x2E, 0x72, 0x96, 0xA1, 0xF8, 0x13, 0x35],
@@ -69,9 +71,22 @@ def agrupar_blocos_arquivo(matriz):
 
 
 
+#### Etapa 1: Adicionar Round Key
+def aplicar_add_round_key_blocos(blocos_arquivo, blocos_chave):
+    aplicar_add_round_key_blocos_etapa01 = []
+    for bloco_arquivo, bloco_chave in zip(blocos_arquivo, blocos_chave):
+        resultado_bloco = add_round_key_etapa01(bloco_arquivo, bloco_chave)
+        aplicar_add_round_key_blocos_etapa01.append(resultado_bloco)
+    
+    print("🔀 Etapa 1: Adicionar Round Key")
+    for idx, resultado_bloco in enumerate(aplicar_add_round_key_blocos_etapa01):
+        print(f"Bloco {idx+1}:")
+        for linha in resultado_bloco:
+            print(' '.join(f'0x{int(byte, 16):02X}' for byte in linha))
+    return aplicar_add_round_key_blocos_etapa01
 
 
-def add_round_key(matriz_Arquivo, matriz_chave):
+def add_round_key_etapa01(matriz_Arquivo, matriz_chave):
     resultado = []
     for i in range(4):
         linha = []
@@ -81,12 +96,55 @@ def add_round_key(matriz_Arquivo, matriz_chave):
         resultado.append(linha)
     return list(zip(*resultado))
 
-def shift_rows(matriz):
-    if len(matriz) < 4:
-        raise ValueError(f"A matriz deve ter pelo menos 4 linhas para shift_rows, mas tem {len(matriz)}")
-    nova_matriz = []
-    for i in range(4):
-        linha = matriz[i]
-        linha_deslocada = linha[i:] + linha[:i]  # Rotaciona a linha i, i posições
-        nova_matriz.append(linha_deslocada)
-    return nova_matriz
+
+#### Etapa 2: Substituir S-Box
+def substituir_Sbox_Etapa02(aplicar_add_round_key_blocos_etapa01):
+    substituidas_SBox_Etapa2 = []
+
+    # Exibe os resultados de cada bloco
+    for idx, resultado in enumerate(aplicar_add_round_key_blocos_etapa01):
+        for linha_idx, linha in enumerate(resultado):
+            nova_linha = []
+            for palavra_idx, palavra in enumerate(linha):
+                palavra_int = int(palavra, 16) if isinstance(palavra, str) and palavra.startswith('0x') else palavra
+                palavra_bytes = palavra_int.to_bytes(1, byteorder='big')
+                nova_palavra = substituicao_palavra(palavra_bytes)
+                nova_linha.append(f"0x{nova_palavra[0]:02x}")  # Armazena como string hexadecimal
+
+            substituidas_SBox_Etapa2.append(nova_linha)
+    # Exemplo de uso: mostrar a lista final
+    print("\n📦 Etapa 2: Substituir S-Box")
+    blocos = [substituidas_SBox_Etapa2[i:i+4] for i in range(0, len(substituidas_SBox_Etapa2), 4)]
+    for idx, bloco in enumerate(blocos):
+        print(f"Bloco {idx+1}:")
+        for linha in bloco:
+            print(' '.join(f'0x{int(byte, 16):02X}' for byte in linha))
+    return substituidas_SBox_Etapa2
+
+#### Etapa 3: Shift Rows
+def shift_rows_blocos(linhas_blocos):
+    blocos_shifted = []
+    blocos = [linhas_blocos[i:i+4] for i in range(0, len(linhas_blocos), 4)]
+
+    print("\n🔁 Estado após ShiftRows:")
+
+    for idx, bloco in enumerate(blocos):
+        # Aplica ShiftRows
+        novo_bloco = []
+        for i in range(4):
+            nova_linha = bloco[i][i:] + bloco[i][:i]  # Rotaciona i posições
+            novo_bloco.append(nova_linha)
+
+        # Print formatado
+        print(f"bloco {idx+1:02d}")
+        for linha in novo_bloco:
+            print(" ".join(linha))
+
+        blocos_shifted.extend(novo_bloco)
+
+    return blocos_shifted
+
+
+
+
+

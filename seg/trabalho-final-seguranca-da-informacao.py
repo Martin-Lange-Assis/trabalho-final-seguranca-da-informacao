@@ -61,55 +61,30 @@ print(f"\n🔒 matriz_Arquivo_padding {matriz_Arquivo_padding} ")
 
 blocos_arquivo = agrupar_blocos_arquivo(matriz_Arquivo_padding)
 print(f"\n🔒 agrupar_blocos_arquivo {blocos_arquivo} ")
+
+blocos_chave = agrupar_blocos_chave(matriz_chave)
+print(f"\n🔒 agrupar_blocos_chave {blocos_chave} ")
 # Aplica a operação em cada bloco com a mesma chave
 # resultados = [add_round_key(bloco, matriz_chave) for bloco in blocos_arquivo]
-resultados = []  # lista que vai guardar os resultados
-
-for bloco in blocos_arquivo:
-    resultado_bloco = add_round_key(bloco, matriz_chave)  # aplica a função no bloco
-    resultados.append(resultado_bloco)  # adiciona o resultado na lista
-print(f"\n🔒 resultados {resultados} ")
 
 
-# Exibe os resultados de cada bloco
-# Lista para armazenar as palavras substituídas de todos os blocos
-palavras_substituidas = []
+aplicar_add_round_key_blocos_etapa01 = aplicar_add_round_key_blocos(blocos_arquivo, blocos_chave)
 
-# Exibe os resultados de cada bloco
-for idx, resultado in enumerate(resultados):
-    print(f"\n🔒 Bloco {idx+1} cifrado:")
-    for linha_idx, linha in enumerate(resultado):
-        print(' '.join(linha))
-        nova_linha = []
-        for palavra_idx, palavra in enumerate(linha):
-            palavra_int = int(palavra, 16) if isinstance(palavra, str) and palavra.startswith('0x') else palavra
-            palavra_bytes = palavra_int.to_bytes(1, byteorder='big')
-            nova_palavra = substituicao_palavra(palavra_bytes)
-            nova_linha.append(f"0x{nova_palavra[0]:02x}")  # Armazena como string hexadecimal
-            print(f"Palavra original: {palavra} -> Substituída: 0x{nova_palavra[0]:02X}")
-        palavras_substituidas.append(nova_linha)
+substituidas_SBox_Etapa2 = substituir_Sbox_Etapa02(aplicar_add_round_key_blocos_etapa01)
 
-# Exemplo de uso: mostrar a lista final
-print("\n📦 Lista final com palavras substituídas (hex):")
-for linha in palavras_substituidas:
-    print(' '.join(linha))
+matriz_shift_rows_Etapa03 = shift_rows_blocos(substituidas_SBox_Etapa2)
 
 
-matriz_shift_rows = shift_rows(palavras_substituidas)
-
-print("\n🔁 Estado após ShiftRows:")
-for linha in matriz_shift_rows:
-    print(' '.join(linha))
 
 
 # TESTANDO MIX_COLUMNS
 
-def mix_columns(matriz_shift_rows):
+def mix_columns(matriz_shift_rows_Etapa03):
     # Garante que todos os valores são inteiros (corrige possíveis strings hex)
     for i in range(4):
         for j in range(4):
-            if isinstance(matriz_shift_rows[i][j], str):
-                matriz_shift_rows[i][j] = int(matriz_shift_rows[i][j], 16)
+            if isinstance(matriz_shift_rows_Etapa03[i][j], str):
+                matriz_shift_rows_Etapa03[i][j] = int(matriz_shift_rows_Etapa03[i][j], 16)
     result = [[0] * 4 for _ in range(4)]
     mult_matrix = [
         [2, 3, 1, 1],
@@ -119,7 +94,7 @@ def mix_columns(matriz_shift_rows):
     ]
 
     for col in range(4):
-        coluna = [matriz_shift_rows[linha][col] for linha in range(4)]
+        coluna = [matriz_shift_rows_Etapa03[linha][col] for linha in range(4)]
         for linha in range(4):
             valor = 0
             for k in range(4):
@@ -137,18 +112,18 @@ def mix_columns(matriz_shift_rows):
             result[linha][col] = valor
     return result
 
-resultado_mix_columns = mix_columns(matriz_shift_rows)
+resultado_mix_columns_Etapa04 = mix_columns(matriz_shift_rows_Etapa03)
 
 
 
 # Exibir resultado em hex
 # — ShiftRows já impresso acima —
 
-print()                          # 1 linha em branco
-# print("\n"*2)                  # se quiser 2 linhas em branco
-print("🔀 Resultado após MixColumns:\n")
-for linha in resultado:
-    print(' '.join(f'0x{int(byte, 16):02X}' for byte in linha))
+# print()                          # 1 linha em branco
+# # print("\n"*2)                  # se quiser 2 linhas em branco
+# print("🔀 Resultado após MixColumns:\n")
+# for linha in resultado_mix_columns_Etapa04:
+#     print(' '.join(f'0x{int(byte, 16):02X}' for byte in linha))
 
 
 def add_round_key5(mix_columns_state, resultados):
@@ -185,7 +160,7 @@ for linha in resultado_addroundkey:
 # print(' '.join(f'0x{byte:02X}' for byte in linha))
 
 # Suponha que voce já tenha resultado_mixcolumns e round_key_rodada como 4x4
-resultado_addroundkey = add_round_key5(resultado_mix_columns, resultados)
+resultado_addroundkey = add_round_key5(resultado_mix_columns, resultado_addroundkey)
 
 print("\n🔐 Resultado após AddRoundKey:\n")
 for linha in resultado_addroundkey:
