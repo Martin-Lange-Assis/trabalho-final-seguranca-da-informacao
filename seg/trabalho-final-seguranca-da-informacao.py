@@ -10,7 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 from chave import *
 from abrir_salvar_Arquivo import *
-from mix_columns import *
+from cifrar import *
 
 
 # operacao = int(input('Selecione a operação desejada: \n 0 - Cifrar \n 1 - Decifrar \n'))
@@ -44,8 +44,8 @@ if caminho:
 matriz_Arquivo = mostrar_bytes_em_hex(bits)
 matriz_Arquivo_padding = PKCS7_Padding(matriz_Arquivo)
 
+print(f"\n🔒 matriz_Arquivo_padding {matriz_Arquivo_padding} cifrado:")
 
-# print(matriz_Arquivo)
 
 # A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P
 ##### parte cifrar 
@@ -55,38 +55,11 @@ matriz_Arquivo_padding = PKCS7_Padding(matriz_Arquivo)
 
 # add_round_key(matriz_Arquivo_padding, matriz_chave[0])
 
-def dividir_em_blocos_4x4(matriz):
-    blocos = []
-    num_blocos = len(matriz[0]) // 4  # 8 colunas -> 2 blocos
-
-    for b in range(num_blocos):
-        bloco = []
-        for linha in matriz:
-            bloco.append(linha[b*4:(b+1)*4])
-        blocos.append(bloco)
-    return blocos
-
-def add_round_key(matriz_Arquivo, matriz_chave):
-    resultado = []
-    for i in range(4):
-        linha = []
-        for j in range(4):
-            valor_xor = int(matriz_Arquivo[i][j], 16) ^ int(matriz_chave[i][j], 16)
-            linha.append(f"0x{valor_xor:02x}")
-        resultado.append(linha)
-    return list(zip(*resultado))
-
-def shift_rows(matriz):
-    nova_matriz = []
-    for i in range(4):
-        linha = matriz[i]
-        linha_deslocada = linha[i:] + linha[:i]  # Rotaciona a linha i, i posições
-        nova_matriz.append(linha_deslocada)
-    return nova_matriz
-
 
 # Divide a matriz_Arquivo em blocos de 4x4
-blocos_arquivo = dividir_em_blocos_4x4(matriz_Arquivo)
+# Junta cada dois blocos de 2 linhas em um bloco de 4 linhas
+
+blocos_arquivo = agrupar_blocos_arquivo(matriz_Arquivo_padding)
 
 # Aplica a operação em cada bloco com a mesma chave
 # resultados = [add_round_key(bloco, matriz_chave) for bloco in blocos_arquivo]
@@ -174,7 +147,6 @@ resultado_mix_columns = mix_columns(matriz_shift_rows)
 print()                          # 1 linha em branco
 # print("\n"*2)                  # se quiser 2 linhas em branco
 print("🔀 Resultado após MixColumns:\n")
-
 for linha in resultado:
     print(' '.join(f'0x{int(byte, 16):02X}' for byte in linha))
 
@@ -218,7 +190,7 @@ resultado_addroundkey = add_round_key5(resultado_mix_columns, resultados)
 print("\n🔐 Resultado após AddRoundKey:\n")
 for linha in resultado_addroundkey:
     print(' '.join(f'0x{byte:02X}' for byte in linha))
-
+print("\n---------------------------------\n")
 
 
 
