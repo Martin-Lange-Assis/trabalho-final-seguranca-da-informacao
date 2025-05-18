@@ -41,6 +41,8 @@ L = [
     [0x67, 0x4A, 0xED, 0xDE, 0xC5, 0x31, 0xFE, 0x18, 0x0D, 0x63, 0x8C, 0x80, 0xC0, 0xF7, 0x70, 0x07]
 ]
 
+#def cifrar_aes(matriz_Arquivo_padding, matriz_chave):
+
 
 def galois_mult(a, b):
     a = int(a)
@@ -68,7 +70,6 @@ def agrupar_blocos_arquivo(matriz):
         bloco = [linha[i:i+4] for i in range(0, len(linha), 4)]
         blocos.append(bloco)
     return blocos
-
 
 
 #### Etapa 1: Adicionar Round Key
@@ -144,7 +145,60 @@ def shift_rows_blocos(linhas_blocos):
 
     return blocos_shifted
 
+def mix_columns(matriz_shift_rows_Etapa03):
+    # Garante que todos os valores são inteiros (corrige possíveis strings hex)
+    for i in range(4):
+        for j in range(4):
+            if isinstance(matriz_shift_rows_Etapa03[i][j], str):
+                matriz_shift_rows_Etapa03[i][j] = int(matriz_shift_rows_Etapa03[i][j], 16)
+    result = [[0] * 4 for _ in range(4)]
+    mult_matrix = [
+        [2, 3, 1, 1],
+        [1, 2, 3, 1],
+        [1, 1, 2, 3],
+        [3, 1, 1, 2]
+    ]
 
+    for col in range(4):
+        coluna = [matriz_shift_rows_Etapa03[linha][col] for linha in range(4)]
+        for linha in range(4):
+            valor = 0
+            for k in range(4):
+                a = coluna[k]
+                b = mult_matrix[linha][k]
+                if b == 1:
+                    mult = a
+                elif b == 2:
+                    mult = galois_mult(a, 2)
+                elif b == 3:
+                    mult = galois_mult(a, 3)
+                else:
+                    raise ValueError("Valor inválido na matriz de multiplicação")
+                valor ^= mult
+            result[linha][col] = valor
 
+    print("\n🔀 Resultado após MixColumns:\n")
+    for linha in result:
+        print(' '.join(f'0x{int(byte):02X}' for byte in linha))
+    return result
 
+def add_round_key5(mix_columns_state, round_key):
+    resultado = [[0] * 4 for _ in range(4)]
+    for i in range(4):
+        for j in range(4):
+            # Garantir que ambos os valores são inteiros
+            val_a = mix_columns_state[i][j]
+            if isinstance(val_a, str):
+                val_a = int(val_a, 16)
 
+            val_b = round_key[i][j]
+            if isinstance(val_b, str):
+                val_b = int(val_b, 16)
+
+            # Operação XOR
+            resultado[i][j] = val_a ^ val_b
+
+    print("\n🔐 Resultado após AddRoundKey:\n")
+    for linha in resultado:
+        print(' '.join(f'0x{byte:02X}' for byte in linha))
+    return resultado
