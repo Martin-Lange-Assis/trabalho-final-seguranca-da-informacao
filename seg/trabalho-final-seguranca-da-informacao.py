@@ -44,7 +44,7 @@ if caminho:
 matriz_Arquivo = mostrar_bytes_em_hex(bits)
 matriz_Arquivo_padding = PKCS7_Padding(matriz_Arquivo)
 
-print(f"\n🔒 matriz_Arquivo_padding {matriz_Arquivo_padding} cifrado:")
+print(f"\n🔒 matriz_Arquivo_padding {matriz_Arquivo_padding} ")
 
 
 # A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P
@@ -60,7 +60,7 @@ print(f"\n🔒 matriz_Arquivo_padding {matriz_Arquivo_padding} cifrado:")
 # Junta cada dois blocos de 2 linhas em um bloco de 4 linhas
 
 blocos_arquivo = agrupar_blocos_arquivo(matriz_Arquivo_padding)
-
+print(f"\n🔒 agrupar_blocos_arquivo {blocos_arquivo} ")
 # Aplica a operação em cada bloco com a mesma chave
 # resultados = [add_round_key(bloco, matriz_chave) for bloco in blocos_arquivo]
 resultados = []  # lista que vai guardar os resultados
@@ -68,7 +68,7 @@ resultados = []  # lista que vai guardar os resultados
 for bloco in blocos_arquivo:
     resultado_bloco = add_round_key(bloco, matriz_chave)  # aplica a função no bloco
     resultados.append(resultado_bloco)  # adiciona o resultado na lista
-    print(resultados)
+print(f"\n🔒 resultados {resultados} ")
 
 
 # Exibe os resultados de cada bloco

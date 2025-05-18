@@ -60,43 +60,13 @@ def galois_mult(a, b):
 
     return result
 
-def dividir_em_blocos_4x4(matriz):
-    """
-    Divide a matriz em blocos 4x4 (cada bloco é uma matriz 4x4).
-    Retorna uma lista de blocos, onde cada bloco é uma lista de 4 listas de 4 elementos.
-    """
-
+def agrupar_blocos_arquivo(matriz):
     blocos = []
     for linha in matriz:
-        for j in range(0, len(linha), 4):
-            bloco = [linha[j:j+4] for linha in matriz]
-            bloco = [linha[j:j+4] for linha in matriz]
-            break  # Só precisa de uma vez por linha
-        # Para cada linha, pegamos os blocos de 4 em 4 colunas
-    for i in range(0, len(matriz), 4):
-        for j in range(0, len(matriz[0]), 4):
-            bloco = []
-            for k in range(4):
-                if i + k < len(matriz):
-                    linha_bloco = []
-                    for l in range(4):
-                        if j + l < len(matriz[0]):
-                            linha_bloco.append(matriz[i + k][j + l])
-                    bloco.append(linha_bloco)
-            if len(bloco) == 4 and all(len(l) == 4 for l in bloco):
-                blocos.append(bloco)
-    print(f"Dividido em {blocos} blocos de 4x4.")
+        bloco = [linha[i:i+4] for i in range(0, len(linha), 4)]
+        blocos.append(bloco)
     return blocos
 
-def agrupar_blocos_arquivo(matriz_Arquivo_padding):
-
-    print(f"matriz_Arquivo_padding: {matriz_Arquivo_padding}")
-    """
-    Divide a matriz em blocos 4x4, cada linha da matriz vira um bloco 4x4.
-    """
-    blocos = dividir_em_blocos_4x4(matriz_Arquivo_padding)
-    print(f"agrupar_blocos_arquivo em {blocos} blocos de 4x4.")
-    return blocos
 
 
 
