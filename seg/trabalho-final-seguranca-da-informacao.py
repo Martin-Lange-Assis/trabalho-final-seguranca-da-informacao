@@ -10,7 +10,7 @@ import cv2
 import matplotlib.pyplot as plt
 from chave import *
 from abrir_salvar_Arquivo import *
-from cifragem import *
+from mix_columns import *
 
 
 # operacao = int(input('Selecione a operação desejada: \n 0 - Cifrar \n 1 - Decifrar \n'))
@@ -76,21 +76,30 @@ def add_round_key(matriz_Arquivo, matriz_chave):
         resultado.append(linha)
     return list(zip(*resultado))
 
-
+def shift_rows(matriz):
+    nova_matriz = []
+    for i in range(4):
+        linha = matriz[i]
+        linha_deslocada = linha[i:] + linha[:i]  # Rotaciona a linha i, i posições
+        nova_matriz.append(linha_deslocada)
+    return nova_matriz
 
 
 # Divide a matriz_Arquivo em blocos de 4x4
 blocos_arquivo = dividir_em_blocos_4x4(matriz_Arquivo)
 
 # Aplica a operação em cada bloco com a mesma chave
-resultados = [add_round_key(bloco, matriz_chave) for bloco in blocos_arquivo]
+# resultados = [add_round_key(bloco, matriz_chave) for bloco in blocos_arquivo]
+resultados = []  # lista que vai guardar os resultados
+
+for bloco in blocos_arquivo:
+    resultado_bloco = add_round_key(bloco, matriz_chave)  # aplica a função no bloco
+    resultados.append(resultado_bloco)  # adiciona o resultado na lista
+    print(resultados)
+
 
 # Exibe os resultados de cada bloco
 # Lista para armazenar as palavras substituídas de todos os blocos
-palavras_substituidas = []
-
-# Exibe os resultados de cada bloco
-# Lista para armazenar as palavras substituídas (em hexadecimal) de todos os blocos
 palavras_substituidas = []
 
 # Exibe os resultados de cada bloco
@@ -113,9 +122,103 @@ for linha in palavras_substituidas:
     print(' '.join(linha))
 
 
-# Agora 'palavras_substituidas' é uma lista de listas, onde cada sublista é uma linha com os bytes substituídos
+matriz_shift_rows = shift_rows(palavras_substituidas)
+
+print("\n🔁 Estado após ShiftRows:")
+for linha in matriz_shift_rows:
+    print(' '.join(linha))
+
+
+# TESTANDO MIX_COLUMNS
+
+def mix_columns(matriz_shift_rows):
+    # Garante que todos os valores são inteiros (corrige possíveis strings hex)
+    for i in range(4):
+        for j in range(4):
+            if isinstance(matriz_shift_rows[i][j], str):
+                matriz_shift_rows[i][j] = int(matriz_shift_rows[i][j], 16)
+    result = [[0] * 4 for _ in range(4)]
+    mult_matrix = [
+        [2, 3, 1, 1],
+        [1, 2, 3, 1],
+        [1, 1, 2, 3],
+        [3, 1, 1, 2]
+    ]
+
+    for col in range(4):
+        coluna = [matriz_shift_rows[linha][col] for linha in range(4)]
+        for linha in range(4):
+            valor = 0
+            for k in range(4):
+                a = coluna[k]
+                b = mult_matrix[linha][k]
+                if b == 1:
+                    mult = a
+                elif b == 2:
+                    mult = galois_mult(a, 2)
+                elif b == 3:
+                    mult = galois_mult(a, 3)
+                else:
+                    raise ValueError("Valor inválido na matriz de multiplicação")
+                valor ^= mult
+            result[linha][col] = valor
+    return result
+
+resultado_mix_columns = mix_columns(matriz_shift_rows)
+
+
+
+# Exibir resultado em hex
+# — ShiftRows já impresso acima —
+
+print()                          # 1 linha em branco
+# print("\n"*2)                  # se quiser 2 linhas em branco
+print("🔀 Resultado após MixColumns:\n")
+
+for linha in resultado:
+    print(' '.join(f'0x{int(byte, 16):02X}' for byte in linha))
+
+
+def add_round_key5(mix_columns_state, resultados):
+    print(resultados)
+    resultado = []
+    for i in range(4):
+        linha = []
+        for j in range(4):
+            # mix_columns_state e round_key podem conter strings "0xXX" ou ints
+            a = mix_columns_state[i][j]
+            
+            b = resultados[i][j]
+
+            val_a = a if isinstance(a, int) else int(a, 16)
+            val_b = b if isinstance(b, int) else int(b, 16)
+            print(f"DEBUG - b na posição [{i}][{j}]: {b} (tipo {type(b)})")
+
+            valor_xor = val_a ^ val_b
+            linha.append(valor_xor)
+        resultado.append(linha)
+    return resultado
+
+
+resultado_addroundkey = add_round_key5(resultado_mix_columns, matriz_chave)
+
+# Imprime o resultado formatado em hex
+for linha in resultado_addroundkey:
+    print(' '.join(f"0x{byte:02X}" for byte in linha))
 
 
 
 
-# chave_round_key_0 = add_round_key(matriz_Arquivo, matriz_chave)
+
+# print(' '.join(f'0x{byte:02X}' for byte in linha))
+
+# Suponha que voce já tenha resultado_mixcolumns e round_key_rodada como 4x4
+resultado_addroundkey = add_round_key5(resultado_mix_columns, resultados)
+
+print("\n🔐 Resultado após AddRoundKey:\n")
+for linha in resultado_addroundkey:
+    print(' '.join(f'0x{byte:02X}' for byte in linha))
+
+
+
+
