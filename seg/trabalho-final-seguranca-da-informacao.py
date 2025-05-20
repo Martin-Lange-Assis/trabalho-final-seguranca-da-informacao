@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from chave import *
 from abrir_salvar_Arquivo import *
 from cifrar import *
+import os
 
 
 # Processar a chave
@@ -72,15 +73,19 @@ substituidas_SBox_Etapa2 = substituir_Sbox_Etapa02(aplicar_add_round_key_blocos_
 
 matriz_shift_rows_Etapa03 = shift_rows_blocos(substituidas_SBox_Etapa2)
 
-resultado_mix_columns_Etapa04 = mix_columns(matriz_shift_rows_Etapa03)
+resultado_mix_columns_Etapa04 = mix_columns_blocos(matriz_shift_rows_Etapa03)
 
-resultado_addroundkey = add_round_key5(resultado_mix_columns_Etapa04, matriz_chave)
+resultado_addroundkey_Etapa05 = add_round_key5_blocos(resultado_mix_columns_Etapa04, matriz_chave)
 
-with open("./files/encrypted.bin", "wb") as f:
-    f.write(resultado_addroundkey)
+resultado_addroundkey_hex = [[hex(byte) for byte in bloco] for bloco in resultado_addroundkey_Etapa05]
 
+
+#### Gerar o arquivo de Saída ############
+
+salvar_arquivo_criptografado(resultado_addroundkey_hex)
 
 print("\n---------------------------------\n")
+
 
 
 

@@ -145,60 +145,109 @@ def shift_rows_blocos(linhas_blocos):
 
     return blocos_shifted
 
-def mix_columns(matriz_shift_rows_Etapa03):
-    # Garante que todos os valores são inteiros (corrige possíveis strings hex)
-    for i in range(4):
-        for j in range(4):
-            if isinstance(matriz_shift_rows_Etapa03[i][j], str):
-                matriz_shift_rows_Etapa03[i][j] = int(matriz_shift_rows_Etapa03[i][j], 16)
-    result = [[0] * 4 for _ in range(4)]
-    mult_matrix = [
-        [2, 3, 1, 1],
-        [1, 2, 3, 1],
-        [1, 1, 2, 3],
-        [3, 1, 1, 2]
-    ]
+#### Etapa 4: Mix Columns
+def mix_columns_blocos(matriz_shift_rows_Etapa03):
+    blocos = [matriz_shift_rows_Etapa03[i:i+4] for i in range(0, len(matriz_shift_rows_Etapa03), 4)]
+    blocos_mix = []
+    for idx, bloco in enumerate(blocos):
+        for i in range(4):
+            for j in range(4):
+                if isinstance(bloco[i][j], str):
+                    bloco[i][j] = int(bloco[i][j], 16)
+        result = [[0] * 4 for _ in range(4)]
+        mult_matrix = [
+            [2, 3, 1, 1],
+            [1, 2, 3, 1],
+            [1, 1, 2, 3],
+            [3, 1, 1, 2]
+        ]
 
-    for col in range(4):
-        coluna = [matriz_shift_rows_Etapa03[linha][col] for linha in range(4)]
-        for linha in range(4):
-            valor = 0
-            for k in range(4):
-                a = coluna[k]
-                b = mult_matrix[linha][k]
-                if b == 1:
-                    mult = a
-                elif b == 2:
-                    mult = galois_mult(a, 2)
-                elif b == 3:
-                    mult = galois_mult(a, 3)
-                else:
-                    raise ValueError("Valor inválido na matriz de multiplicação")
-                valor ^= mult
-            result[linha][col] = valor
+        for col in range(4):
+            coluna = [bloco[linha][col] for linha in range(4)]
+            for linha in range(4):
+                valor = 0
+                for k in range(4):
+                    a = coluna[k]
+                    b = mult_matrix[linha][k]
+                    if b == 1:
+                        mult = a
+                    elif b == 2:
+                        mult = galois_mult(a, 2)
+                    elif b == 3:
+                        mult = galois_mult(a, 3)
+                    else:
+                        raise ValueError("Valor inválido na matriz de multiplicação")
+                    valor ^= mult
+                result[linha][col] = valor
 
-    print("\n🔀 Resultado após MixColumns:\n")
-    for linha in result:
-        print(' '.join(f'0x{int(byte):02X}' for byte in linha))
-    return result
+        print(f"\n🔀 Resultado após MixColumns - Bloco {idx+1}:\n")
+        for linha in result:
+            print(' '.join(f'0x{int(byte):02X}' for byte in linha))
+        blocos_mix.extend(result)
 
-def add_round_key5(mix_columns_state, round_key):
-    resultado = [[0] * 4 for _ in range(4)]
-    for i in range(4):
-        for j in range(4):
-            # Garantir que ambos os valores são inteiros
-            val_a = mix_columns_state[i][j]
-            if isinstance(val_a, str):
-                val_a = int(val_a, 16)
+    return blocos_mix
 
-            val_b = round_key[i][j]
-            if isinstance(val_b, str):
-                val_b = int(val_b, 16)
+#### Etapa 5: Add Round Key (Etapa Final)
+# Converte todos os elementos de uma matriz de '0x..' (str) para int
+def converter_hex_para_int(matriz_hex):
+    return [[int(x, 16) if isinstance(x, str) else x for x in linha] for linha in matriz_hex]
+ 
 
-            # Operação XOR
-            resultado[i][j] = val_a ^ val_b
+# Função para converter a chave expandida (colunas) em blocos 4x4
+def construir_blocos_4x4(colunas_hex):
+    blocos = []
+    for i in range(0, len(colunas_hex), 4):
+        bloco = []
+        for linha in range(4):  # cada linha do bloco
+            linha_bloco = [
+                colunas_hex[i + 0][linha],
+                colunas_hex[i + 1][linha],
+                colunas_hex[i + 2][linha],
+                colunas_hex[i + 3][linha]
+            ]
+            bloco.append(linha_bloco)
+        blocos.append(bloco)
+    return blocos
 
-    print("\n🔐 Resultado após AddRoundKey:\n")
-    for linha in resultado:
-        print(' '.join(f'0x{byte:02X}' for byte in linha))
+# Converter strings '0x..' para inteiros
+def converter_blocos_para_inteiros(blocos_hex):
+    blocos_int = []
+    for bloco in blocos_hex:
+        bloco_int = []
+        for linha in bloco:
+            linha_int = [int(valor, 16) for valor in linha]
+            bloco_int.append(linha_int)
+        blocos_int.append(bloco_int)
+    return blocos_int
+
+
+def add_round_key5_blocos(bloco_estado, bloco_chave):
+    resultado = []
+
+    for i in range(len(bloco_estado)):
+        linha = []
+        for j in range(len(bloco_estado[i])):
+            val_estado = bloco_estado[i][j]
+            val_chave = bloco_chave[i][j]
+            if isinstance(val_chave, str):
+                val_chave = int(val_chave, 16)
+            if isinstance(val_estado, str):
+                val_estado = int(val_estado, 16)
+            linha.append(val_estado ^ val_chave)
+        resultado.append(linha)
+
+    # Impressão dos blocos no formato por colunas (5 blocos de 4x4)
+    num_blocos = len(resultado) // 4
+    for bloco_idx in range(num_blocos):
+        print(f"\n🔀 Resultado após AddRoundKey - Bloco {bloco_idx + 1}:\n")
+        bloco = resultado[bloco_idx * 4 : (bloco_idx + 1) * 4]
+
+        # Impressão por colunas
+        for i in range(4):  # linhas do novo formato
+            linha = [bloco[j][i] for j in range(4)]
+            print(' '.join(f'0x{valor:02x}' for valor in linha))
+
     return resultado
+
+
+

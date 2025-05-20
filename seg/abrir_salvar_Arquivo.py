@@ -1,3 +1,5 @@
+import os
+
 def selecionar_arquivo():
     """Solicita ao usuário o caminho do arquivo via input."""
     caminho = input("Digite o caminho completo do arquivo para ler: ")
@@ -70,3 +72,13 @@ def bits_para_arquivo(lista_bits, caminho_saida):
     with open(caminho_saida, 'wb') as f:
         f.write(bytes_data)
 
+## Função para salvar o arquivo criptografado
+def salvar_arquivo_criptografado(resultado):
+    caminho_saida = 'seg/files/saidaCriptografada.txt'
+    os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
+    with open(caminho_saida, 'w', encoding='latin-1') as f:
+        for bloco in resultado:
+            # Converte cada valor hexadecimal (ex: '6C') em um caractere
+            linha = ''.join([chr(int(hex_val, 16)) for hex_val in bloco])
+            f.write(linha + '\n')
+    print(f"Arquivo criptografado salvo em: {caminho_saida}")
