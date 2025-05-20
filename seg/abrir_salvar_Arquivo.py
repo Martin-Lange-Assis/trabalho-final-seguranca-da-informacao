@@ -74,11 +74,10 @@ def bits_para_arquivo(lista_bits, caminho_saida):
 
 ## Função para salvar o arquivo criptografado
 def salvar_arquivo_criptografado(resultado):
-    caminho_saida = 'seg/files/saidaCriptografada.txt'
+    caminho_saida = './files/saidaCriptografada.bin'
     os.makedirs(os.path.dirname(caminho_saida), exist_ok=True)
-    with open(caminho_saida, 'w', encoding='latin-1') as f:
+    with open(caminho_saida, 'wb') as f:
         for bloco in resultado:
-            # Converte cada valor hexadecimal (ex: '6C') em um caractere
             linha = ''.join([chr(int(hex_val, 16)) for hex_val in bloco])
-            f.write(linha + '\n')
+            f.write((linha + '\n').encode('latin-1'))  # codifica a string em bytes
     print(f"Arquivo criptografado salvo em: {caminho_saida}")
