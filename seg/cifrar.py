@@ -65,6 +65,7 @@ def galois_mult(a, b):
     return result
 
 def agrupar_blocos_arquivo(matriz):
+    
     blocos = []
     for linha in matriz:
         bloco = [linha[i:i+4] for i in range(0, len(linha), 4)]
