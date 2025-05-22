@@ -78,23 +78,25 @@ def inv_substituir_Sbox_Etapa02(blocos):
         resultado.append(nova_linha)
     return resultado
 
-def inv_add_round_key1_blocos(bloco_estado, blocos_chave):
+def inv_add_round_key1_blocos(bloco_estado, blocos_chave): 
     return aplicar_add_round_keyfinal_blocos(bloco_estado, blocos_chave)
 
 def aplicar_add_round_keyfinal_blocos(bloco_estado, blocos_chave):
     resultado = []
-    num_blocos = min(len(blocos_chave), len(bloco_estado) // 4)
+    num_blocos = min(len(bloco_estado), len(blocos_chave))
+    
     for bloco_idx in range(num_blocos):
-        for linha_idx in range(4):
-            index = bloco_idx * 4 + linha_idx
-            linha_estado = bloco_estado[index]
-            linha_chave = blocos_chave[bloco_idx][linha_idx]
+        bloco_resultante = []
+        for linha_estado, linha_chave in zip(bloco_estado[bloco_idx], blocos_chave[bloco_idx]):
             linha_resultante = []
             for byte_estado, byte_chave in zip(linha_estado, linha_chave):
                 xor_byte = int(byte_estado, 16) ^ int(byte_chave, 16)
                 linha_resultante.append(f"0x{xor_byte:02X}")
-            resultado.append(linha_resultante)
+            bloco_resultante.append(linha_resultante)
+        resultado.append(bloco_resultante)
+    
     return resultado
+
 
 
 
@@ -112,10 +114,36 @@ def linearizar_blocos(blocos_4x4):
                 linear.append(byte)
     return linear
 
-def remover_PKCS7_padding(hex_lista):
-    if not hex_lista:
+def remover_PKCS7_padding_blocos(blocos):
+    def remover_PKCS7_padding(hex_lista):
+        if not hex_lista:
+            return hex_lista
+        ultimo_valor = int(hex_lista[-1], 16)
+        if ultimo_valor == 0 or ultimo_valor > len(hex_lista):
+            return hex_lista
+        if all(int(b, 16) == ultimo_valor for b in hex_lista[-ultimo_valor:]):
+            return hex_lista[:-ultimo_valor]
         return hex_lista
-    ultimo_valor = int(hex_lista[-1], 16)
-    if all(int(b, 16) == ultimo_valor for b in hex_lista[-ultimo_valor:]):
-        return hex_lista[:-ultimo_valor]
-    return hex_lista
+
+    # 1. Achatar os blocos em uma lista linear de bytes
+    dados_achatados = [byte for bloco in blocos for linha in bloco for byte in linha]
+
+    # 2. Remover o padding
+    dados_sem_padding = remover_PKCS7_padding(dados_achatados)
+
+    # 3. Reformar em blocos 4x4 (máximo 16 bytes por bloco)
+    blocos_reformados = []
+    for i in range(0, len(dados_sem_padding), 16):
+        bloco = []
+        bloco_dados = dados_sem_padding[i:i+16]
+        for j in range(0, len(bloco_dados), 4):
+            bloco.append(bloco_dados[j:j+4])
+        blocos_reformados.append(bloco)
+
+    return blocos_reformados
+
+def converter_hex_para_texto(hex_lista):
+        return ''.join(chr(int(byte, 16)) for byte in hex_lista)
+
+def achatar_blocos(blocos):
+        return [byte for bloco in blocos for linha in bloco for byte in linha]

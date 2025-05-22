@@ -83,4 +83,8 @@ def salvar_arquivo_criptografado(lista_plana):
 
     print(f"Arquivo criptografado salvo em: {caminho_saida}")
 
+def salvar_em_arquivo(texto, caminho='./files/saidaDescriptografada.txt'):
+        with open(caminho, 'w', encoding='utf-8') as f:
+            f.write(texto)
+        print(f"✅ Arquivo descriptografado salvo em: {caminho}")
 

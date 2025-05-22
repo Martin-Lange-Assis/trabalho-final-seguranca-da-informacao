@@ -66,34 +66,47 @@ else:
     etapa4 = inv_substituir_Sbox_Etapa02(etapa3)
     print(f"\n🔒 resultado_inv_substituir_Sbox_Etapa02 {etapa4} ")
 
-    ### ate aqui esta certo depois de inv_substituir_Sbox_Etapa02 não da o resultado esperado
 
-    
+    def dividir_em_blocos_4x4_formatado(matriz):
+        # Transpor: linhas viram colunas
+        transposta = [list(col) for col in zip(*matriz)]  # 4 linhas, N colunas
+
+        num_colunas = len(transposta[0])
+        if num_colunas % 4 != 0:
+            raise ValueError("Número de colunas da transposta deve ser múltiplo de 4")
+
+        blocos = []
+        for i in range(0, num_colunas, 4):
+            bloco = []
+            for j in range(4):  # para cada linha da transposta (são 4)
+                linha = [transposta[j][i + k] for k in range(4)]  # monta linha por colunas
+                bloco.append(linha)
+            blocos.append(bloco)
+
+        return blocos
+
+    etapa4 = dividir_em_blocos_4x4_formatado(etapa4)
+    print(f"🔒 resultado_estado: {etapa4}")
+    print(f"🔒 resultado_chave: {blocos_chave}")
+
     etapa5 = inv_add_round_key1_blocos(etapa4, blocos_chave)
 
-    blocos_4x4 = dividir_em_blocos_4x4(etapa5)  # Agora são 2 blocos 4x4 (cada bloco com 4 linhas de 4 bytes)
+    print(f"🔒 etapa5 xor: {etapa5}")
 
-    print(f"🔒 resultado_inv_add_round_key (2 blocos 4x4): {blocos_4x4}")
+    bloco_sem_padding = remover_PKCS7_padding_blocos(etapa5)
+    print("🔒 Bloco sem padding:", bloco_sem_padding)
 
-    # Novas etapas para reconstrução do texto
-    blocos_4x4 = dividir_em_blocos_4x4(etapa5)
-    bloco_linear = linearizar_blocos(blocos_4x4)
-     #[[['0x44', '0x45', '0x53', '0x45'], ['0x4E', '0x56', '0x4F', '0x4C'], ['0x56', '0x49', '0x4D', '0x45'], ['0x4E', '0x54', '0x4F', '0x21']],
-    #  [['0x10', '0x10', '0x10', '0x10'], ['0x10', '0x10', '0x10', '0x10'], ['0x10', '0x10', '0x10', '0x10'], ['0x10', '0x10', '0x10', '0x10']]]
+    bloco = achatar_blocos(bloco_sem_padding)
+
+    texto = converter_hex_para_texto(bloco)
+
+    print("🔒 Texto convertido:", texto)
+
+    salvar_em_arquivo(texto)
+
     
-    bloco_sem_padding = remover_PKCS7_padding(bloco_linear)
-    #[[['0x44', '0x45', '0x53', '0x45'], ['0x4E', '0x56', '0x4F', '0x4C'], ['0x56', '0x49', '0x4D', '0x45'], ['0x4E', '0x54', '0x4F', '0x21']],
-    texto_final = ''.join(chr(int(byte, 16)) for byte in bloco_sem_padding)
-    print("🔍 Bloco linear após remoção do padding:", bloco_sem_padding)
-    print("✅ Texto descriptografado:", texto_final)
 
-    with open('./files/saidaDescriptografada.txt', 'w', encoding='utf-8') as f:
-        f.write(texto_final)
-    print("✅ Arquivo descriptografado salvo em: ./files/saidaDescriptografada.txt")
 
-    #🔒 resultado_inv_substituir_Sbox_Etapa02 [['0x05', '0x0b', '0x1f', '0x03'], ['0x07', '0x10', '0x03', '0x1a'], ['0x10', '0x08', '0x06', '0x00'], 
-    # ['0x01', '0x04', '0x09', '0x71'], ['0x7f', '0x3a', '0x73', '0x3e'],
-    #  ['0xd6', '0x90', '0xda', '0x94'], ['0x00', '0x47', '0x0c', '0x43'], ['0xb7', '0xff', '0xb3', '0xe3']]
+    
 
-    #[[['0x44', '0x45', '0x53', '0x45'], ['0x4E', '0x56', '0x4F', '0x4C'], ['0x56', '0x49', '0x4D', '0x45'], ['0x4E', '0x54', '0x4F', '0x21']],
-    #  [['0x10', '0x10', '0x10', '0x10'], ['0x10', '0x10', '0x10', '0x10'], ['0x10', '0x10', '0x10', '0x10'], ['0x10', '0x10', '0x10', '0x10']]]
+  
